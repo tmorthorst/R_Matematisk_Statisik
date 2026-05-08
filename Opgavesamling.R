@@ -12,6 +12,7 @@ log(median(stikprøve))
 
 
 library(resampledata3)
+
 view(Spruce)
 
 #1. Benyt summary til at beregne numeriske opsummeringer af variablen 
@@ -172,3 +173,68 @@ for (i in 1:N) {
 hist(mean.sim,breaks = 20, prob = T, main = "hist med n = 50 og mange forskellige udtræk")
 mean(mean.sim)
 sd(mean.sim)
+
+
+
+#Opgave 18
+bilpriser <- read.csv("Data/Bilpriser.csv")
+View(bilpriser)
+hist(bilpriser$Pris,breaks=25,prob=T)
+summary(bilpriser)
+
+#gennemsnitspris:
+mean(bilpriser$Pris)
+#gennemsnit af diesel og ikke diesel:
+gns<-tapply(bilpriser$Pris,bilpriser$Diesel,mean)
+gns
+#difference:
+diff(gns)
+
+
+#b Find bootstrapfordeling og beregn gennemsnit og tegn histogram:
+#dernæst find empirisk middelværdi og lav et 95% bootstrap percentilinterval
+boot_sample <- sample(bilpriser$Pris, 1125, replace=T)
+mean(boot_sample)
+hist(boot_sample, main= "histogram over bootstrapfordeling af pris",breaks = 25,prob = T)
+
+N <- 10^5 
+
+
+mean_boot_bil <- numeric(N)
+for(i in 1:N){
+  boot_sample <- sample(bilpriser$Pris,1125,replace=T)
+  mean_boot_bil[i]<-mean(boot_sample)
+}
+mean(mean_boot_bil)
+# 95% bootstrap percentilinterval (fra 2,5% til 97,5%)
+quantile(mean_boot_bil, probs=c(0.025,0.975))
+
+
+#Find bootstrap for fordelingen mellem den gennemsnitlige pris for diesel og benzin.
+#Dernæst den empiriske.
+
+N <- 10000 
+
+# Bruger nu "ja" og "nej" med småt, så det matcher dit datasæt
+pris_diesel <- subset(bilpriser, Diesel == "ja")$Pris
+pris_benzin <- subset(bilpriser, Diesel == "nej")$Pris
+
+nDiesel <- length(pris_diesel)
+nBenzin <- length(pris_benzin)
+
+meandiff.boot <- numeric(N)
+
+for(i in 1:N){
+  bootsampleDiesel <- sample(pris_diesel, size = nDiesel, replace = TRUE)
+  bootsampleBenzin <- sample(pris_benzin, size = nBenzin, replace = TRUE)
+  meandiff.boot[i] <- mean(bootsampleDiesel) - mean(bootsampleBenzin)
+}
+
+# Tegner histogrammet
+hist(meandiff.boot, breaks = 25, prob = TRUE,
+     main = "Bootstrapfordeling af prisforskel", xlab = "Prisforskel")
+
+#finder empirisk gennemsnit:
+mean(meandiff.boot)
+
+quantile(meandiff.boot,probs=c(0.025,0.975))
